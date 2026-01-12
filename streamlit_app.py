@@ -18,6 +18,7 @@ st.info("📘 누구나 볼 수 있도록 공개된 시트를 Pandas로 직접 �
 
 csv_url1 = "https://docs.google.com/spreadsheets/d/1VC_q8HJfIufjGVR2zGRcJjBgkefIbp6Pv01rQ1uvoXI/export?format=csv"
 df1 = pd.read_csv(csv_url1)
+st.dataframe(df1)
 st.dataframe(df1['choice'])
 
 # choice 컬럼이 있는 경우 종류별로 집계해서 막대그래프로 출력

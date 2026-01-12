@@ -32,6 +32,9 @@ else:
 
 st.markdown("---")
 
+st.image("sample.png")
+
+
 
 # 정보성 메시지 박스
 st.info("ℹ️ 정보 메시지입니다.")

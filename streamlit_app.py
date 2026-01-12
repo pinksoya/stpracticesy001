@@ -35,7 +35,82 @@ st.markdown("---")
 
 st.image("sample.png")
 
+st.markdown("---")
+import streamlit as st
+import pandas as pd
+from streamlit_gsheets import GSheetsConnection
 
+# ----------------------------------------------------------------
+# 1. 페이지 설정
+# ----------------------------------------------------------------
+st.set_page_config(page_title="넌센스 퀴즈 배틀", page_icon="🤪")
+st.title("🤪 뇌풀기 넌센스 퀴즈")
+st.markdown("센스 있는 사람만 맞힐 수 있는 **넌센스 퀴즈**입니다!")
+
+# ----------------------------------------------------------------
+# 2. 데이터 연결 (제공해주신 새 링크 자동 연결)
+# ----------------------------------------------------------------
+conn = st.connection("gsheets", type=GSheetsConnection)
+
+
+try:
+    # secrets.toml의 링크를 가져옵니다.
+    url = st.secrets["connections"]["gsheets"]["public_url"]
+    
+    # 캐시 없이 즉시 로딩 (ttl=0)
+    df = conn.read(spreadsheet=url, ttl=0)
+
+except Exception as e:
+    st.error("🚨 시트 연결 실패! secrets.toml에 링크를 정확히 넣었는지 확인하세요.")
+    st.stop()
+
+
+# ----------------------------------------------------------------
+# 3. 퀴즈 로직
+# ----------------------------------------------------------------
+# 'is_active'가 TRUE인 것만 가져오기
+active_rows = df[df["is_active"] == True]
+
+if active_rows.empty:
+    st.warning("🥲 현재 오픈된 퀴즈가 없습니다. (관리자가 문제를 출제 중입니다)")
+else:
+    # 진행률 표시줄 (있어 보임)
+    st.progress(len(active_rows) / 10, text=f"총 {len(active_rows)}개의 문제가 준비되었습니다.")
+    st.divider()
+
+    for i, row in active_rows.iterrows():
+        st.subheader(f"Q{i+1}. {row['question_text']}")
+
+        # 보기 옵션 가져오기
+        options = [row[col] for col in df.columns if col.startswith("opt_") and pd.notna(row[col])]
+
+        # 정답 입력
+        user_choice = st.radio(
+            "정답은?", 
+            options, 
+            key=f"quiz_{row['question_id']}", 
+            index=None
+        )
+
+        # 정답 확인 버튼
+        if st.button("정답 확인", key=f"btn_{row['question_id']}"):
+            if user_choice == row["answer"]:
+                st.balloons()
+                st.success(f"🎉 정답입니다! ({row['answer']})")
+            else:
+                st.error("💥 땡! 다시 생각해보세요.")
+        
+        st.divider()
+
+# ----------------------------------------------------------------
+# 4. 마무리 멘트 (숨겨진 문제 유도)
+# ----------------------------------------------------------------
+st.caption("문제가 더 보고 싶나요? 구글 시트에서 'is_active'를 켜보세요!")
+
+
+
+
+st.markdown("---")
 
 # 정보성 메시지 박스
 st.info("ℹ️ 정보 메시지입니다.")
